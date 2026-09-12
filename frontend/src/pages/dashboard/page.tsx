@@ -10,9 +10,9 @@ import MonthPickerCustom from "../../component/monthPickerCustom";
 import { useEffect, useState } from "react";
 import ClockCustom from "../../component/clock";
 import loadingStore from "../../store/loadingStore";
-import { getHistory, getTodayAttendance, patchClockOut, postClockIn } from "../../api/attendance";
+import { getHistory, getSummary, getTodayAttendance, patchClockOut, postClockIn } from "../../api/attendance";
 import { toast } from "react-toastify";
-import type { dataTableInterface, dataTodayAttendanceInterface, locationInterface, tableInterface } from "../../types/attendance";
+import { type dataTableInterface, type dataTodayAttendanceInterface, type locationInterface, type summaryDataInterface, type tableInterface } from "../../types/attendance";
 import { Formatting } from "../../utils/formatting";
 
 interface filterInterface {
@@ -40,7 +40,7 @@ export default function Dashboard() {
     status: "",
   });
 
-  const [filterSummary, setFilterSummary] = useState<string>(dayjs(new Date()).endOf("M").format("YYYY-MM"));
+  const [filterSummary, setFilterSummary] = useState<string>("");
 
   const [dataTable, setDataTable] = useState<tableInterface>({
     data: [],
@@ -52,11 +52,18 @@ export default function Dashboard() {
     },
   });
 
+  const [dataSummary, setDataSummary] = useState<summaryDataInterface>({
+    clockedIn: 0,
+    complete: 0,
+    employee: 0,
+    notClockedIn: 0,
+  });
+
   const summary = [
-    { title: "Total Employees", value: 12, footer: "Active headcount", color: "text-text-title" },
-    { title: "Present Today", value: 6, footer: "50% completion rate", color: "text-text-success" },
-    { title: "Currently In", value: 3, footer: "Still on premises", color: "text-text-neutral" },
-    { title: "Not Clocked In", value: 3, footer: "Pending action", color: "text-text-danger" },
+    { title: "Total Employees", value: dataSummary.employee, color: "text-text-title" },
+    { title: "Present", value: dataSummary.complete, color: "text-text-success" },
+    { title: "Only Clocked In", value: dataSummary.clockedIn, color: "text-text-neutral" },
+    { title: "Not Clocked In", value: dataSummary.notClockedIn, color: "text-text-danger" },
   ];
 
   const columns = [
@@ -146,11 +153,31 @@ export default function Dashboard() {
   }, [filter]);
 
   useEffect(() => {
+    setLoading(true);
+    getSummary(`?month=${filterSummary}`)
+      .then((res) => {
+        setDataSummary(res.data.data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        toast.error(err.message || "Terjadi kesalahan");
+        setLoading(false);
+      });
+  }, [filterSummary]);
+
+  useEffect(() => {
     if (profile.serverTime) {
       setLoading(true);
-      Promise.all([getTodayAttendance(), getHistory(`?page=1&startDate=${dayjs(profile.serverTime).startOf("M").format("YYYY-MM-DD")}&endDate=${filter.endDate || dayjs(profile.serverTime).format("YYYY-MM-DD")}`)])
+      Promise.all([
+        isAdmin ? getSummary(`?month=${dayjs(profile.serverTime).format("YYYY-MM")}`) : getTodayAttendance(),
+        getHistory(`?page=1&startDate=${dayjs(profile.serverTime).startOf("M").format("YYYY-MM-DD")}&endDate=${filter.endDate || dayjs(profile.serverTime).format("YYYY-MM-DD")}`),
+      ])
         .then((res) => {
-          setDataToday(res[0].data.data);
+          if (isAdmin) {
+            setDataSummary(res[0].data.data);
+          } else {
+            setDataToday(res[0].data.data);
+          }
           setDataTable(res[1].data);
           setLoading(false);
         })
@@ -170,7 +197,7 @@ export default function Dashboard() {
             <p className="font-bold text-xl text-text-title">{isAdmin ? "Attendance Overview" : `Hai, ${profile.user.name}`}</p>
             <p className="text-sm text-text-caption">{isAdmin ? "Monitor real-time attendance across your team." : dayjs(profile.serverTime).format("dddd, MMMM DD, YYYY")}</p>
           </div>
-          {isAdmin ? <MonthPickerCustom value={filterSummary} onChange={(value) => setFilterSummary(value)} /> : <ClockCustom />}
+          {isAdmin ? <MonthPickerCustom value={filterSummary || dayjs(profile.serverTime).format("YYYY-MM")} onChange={(value) => setFilterSummary(value)} /> : <ClockCustom />}
         </div>
 
         {isAdmin ? (
@@ -179,7 +206,6 @@ export default function Dashboard() {
               <div key={item.title} className="rounded-xl border p-5 bg-white border-bg-card">
                 <p className="text-xs font-medium text-text-caption">{item.title}</p>
                 <p className={`mt-1.5 font-bold text-2xl ${item.color}`}>{item.value}</p>
-                <p className="mt-1 text-xs text-placeholder">{item.footer}</p>
               </div>
             ))}
           </div>

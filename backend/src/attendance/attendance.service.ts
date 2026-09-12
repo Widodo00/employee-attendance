@@ -273,12 +273,29 @@ export class AttendanceService {
     const year = Number(yearString);
     const month = Number(monthString);
 
-    // Start of month in Asia/Jakarta
+    // Start of month
     const startDate = new Date(Date.UTC(year, month - 1, 1));
 
-    // Start of next month in Asia/Jakarta
+    // Start of next month
     const endDate = new Date(Date.UTC(year, month, 1));
 
+    // Number of days in the requested month
+    const today = new Date(
+      new Date().toLocaleDateString('en-CA', {
+        timeZone: 'Asia/Jakarta',
+      }),
+    );
+
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth() + 1;
+    const currentDay = today.getDate();
+
+    const daysInMonth =
+      year === currentYear && month === currentMonth
+        ? currentDay
+        : new Date(year, month, 0).getDate();
+
+    // Get all employees
     const employees = await this.prisma.user.findMany({
       where: {
         role: 'EMPLOYEE',
@@ -288,13 +305,12 @@ export class AttendanceService {
       },
     });
 
-    const employeeIds = employees.map((employee) => employee.id);
+    const employeeCount = employees.length;
 
-    if (employeeIds.length === 0) {
+    if (employeeCount === 0) {
       return {
         message: 'Attendance summary retrieved successfully',
         data: {
-          month: dto.month,
           employee: 0,
           complete: 0,
           clockedIn: 0,
@@ -303,6 +319,9 @@ export class AttendanceService {
       };
     }
 
+    const employeeIds = employees.map((employee) => employee.id);
+
+    // Get all attendance records in the requested month
     const attendances = await this.prisma.attendance.findMany({
       where: {
         userId: {
@@ -313,14 +332,6 @@ export class AttendanceService {
           lt: endDate,
         },
       },
-      orderBy: [
-        {
-          date: 'desc',
-        },
-        {
-          clockIn: 'desc',
-        },
-      ],
       select: {
         userId: true,
         date: true,
@@ -329,43 +340,27 @@ export class AttendanceService {
       },
     });
 
-    /**
-     * Because an employee can have multiple attendance records
-     * in one month, only the latest attendance is used
-     * to determine the employee's current summary status.
-     */
-    const latestAttendanceMap = new Map<string, (typeof attendances)[number]>();
-
-    for (const attendance of attendances) {
-      if (!latestAttendanceMap.has(attendance.userId)) {
-        latestAttendanceMap.set(attendance.userId, attendance);
-      }
-    }
-
     let complete = 0;
     let clockedIn = 0;
-    let notClockedIn = 0;
 
-    for (const employee of employees) {
-      const attendance = latestAttendanceMap.get(employee.id);
-
-      if (!attendance) {
-        notClockedIn++;
-        continue;
-      }
-
+    for (const attendance of attendances) {
       if (attendance.clockOut) {
         complete++;
-      } else {
+      } else if (attendance.clockIn) {
         clockedIn++;
       }
     }
 
+    // Every employee is expected to have one attendance
+    // record for every day in the requested month.
+    const totalExpectedAttendance = employeeCount * daysInMonth;
+
+    const notClockedIn = totalExpectedAttendance - complete - clockedIn;
+
     return {
       message: 'Attendance summary retrieved successfully',
       data: {
-        month: dto.month,
-        employee: employees.length,
+        employee: employeeCount,
         complete,
         clockedIn,
         notClockedIn,

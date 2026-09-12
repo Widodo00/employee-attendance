@@ -35,3 +35,15 @@ export interface tableInterface {
   message: string;
   paging: pagingTableInterface;
 }
+
+export interface summaryDataInterface {
+  employee: number;
+  complete: number;
+  clockedIn: number;
+  notClockedIn: number;
+}
+
+export interface summaryInterface {
+  message: string;
+  data: summaryDataInterface;
+}

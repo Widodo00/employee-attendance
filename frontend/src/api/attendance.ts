@@ -20,3 +20,7 @@ export const patchClockOut = () => {
 export const getHistory = (params: string) => {
   return api.get<tableInterface>(`attendance/history${params}`);
 };
+
+export const getSummary = (params: string) => {
+  return api.get(`attendance/summary${params}`);
+};
