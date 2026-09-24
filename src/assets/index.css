@@ -1,0 +1,32 @@
+@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Outfit:wght@100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
+
+@theme {
+  --color-border: #f1f5f9;
+  --color-text-body: #45556c;
+  --color-white: #ffffff;
+  --color-placeholder: #90a1b9;
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-text-title: #0f172a;
+  --color-text-label: #314158;
+  --color-bg-card: #e2e8f0;
+  --color-text-caption: #62748e;
+  --color-text-success: #008236;
+  --color-bg-success: #f0fdf4;
+  --color-icon-success: #00c950;
+  --color-bg-primary: #f8fafc;
+}
+
+body {
+  @apply bg-bg-primary;
+  font-family: "Inter", sans-serif;
+}
+
+.input-custom {
+  @apply w-full h-10 px-3 flex items-center rounded-lg border border-bg-card outline-0 placeholder:text-placeholder transition-colors focus-within:border-blue-500;
+}
+
+.btn-primary {
+  @apply h-11 flex items-center justify-center rounded-xl bg-primary shadow-sm font-semibold text-sm text-white cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-not-allowed hover:bg-primary-hover;
+}
