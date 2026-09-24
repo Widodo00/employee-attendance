@@ -22,7 +22,7 @@ export default function InputCustom({ label, placeholder, type, Icon, onChange, 
           />
           {Icon && <Icon className="size-4 text-placeholder absolute left-3" />}
           {type === "password" && (
-            <button className="absolute right-3 cursor-pointer" onClick={() => setShowPassword(!showPassword)}>
+            <button type="button" className="absolute right-3 cursor-pointer" onClick={() => setShowPassword(!showPassword)}>
               <EyeIcon className="size-4 text-placeholder" />
             </button>
           )}

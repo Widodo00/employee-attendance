@@ -20,7 +20,9 @@ export default function Login() {
     { label: "Password", name: "password", type: "password", placeholder: "Enter your password", Icon: LockKeyhole },
   ];
 
-  const onSubmit = () => {
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
     if (!form.email.includes("@") || !form.email.includes(".")) {
       setErrorForm((prev) => ({ ...prev, email: "Invalid email" }));
     }
@@ -28,7 +30,7 @@ export default function Login() {
 
   return (
     <div className="w-full h-dvh flex justify-center items-center">
-      <div className="bg-white border border-border rounded-xl p-6 flex flex-col gap-8">
+      <div className="bg-white border border-border rounded-xl p-6 flex flex-col gap-8 md:w-[384px]">
         <div className="flex gap-2 items-center">
           <div className="size-8 bg-text-title flex items-center justify-center rounded-lg">
             <FingerprintPattern className="size-4.5 text-white" />
@@ -41,7 +43,7 @@ export default function Login() {
           <p className="text-text-caption text-sm">Manage your daily attendance easily.</p>
         </div>
 
-        <div className="flex flex-col gap-4">
+        <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <InputGroup
             fields={formField}
             formData={form}
@@ -51,10 +53,10 @@ export default function Login() {
             }}
             errorForm={errorForm}
           />
-          <button className="btn-primary" disabled={Boolean(errorForm.email) || Boolean(errorForm.password) || !form.email || !form.password} onClick={onSubmit}>
+          <button type="submit" className="btn-primary" disabled={Boolean(errorForm.email) || Boolean(errorForm.password) || !form.email || !form.password}>
             Sign in
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );
