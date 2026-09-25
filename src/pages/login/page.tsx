@@ -1,8 +1,8 @@
 import { useState } from "react";
-import type { errorFormLoginInterface, formLoginInterface } from "../types/login";
+import type { errorFormLoginInterface, formLoginInterface } from "../../types/login";
 import { FingerprintPattern, LockKeyhole, Mail } from "lucide-react";
-import InputGroup from "../component/inputGroup";
-import type { fieldsInputInterface } from "../types/general";
+import InputGroup from "../../component/inputGroup";
+import type { fieldsInputInterface } from "../../types/general";
 
 export default function Login() {
   const [form, setForm] = useState<formLoginInterface>({

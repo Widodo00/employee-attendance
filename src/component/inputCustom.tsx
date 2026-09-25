@@ -18,7 +18,7 @@ export default function InputCustom({ label, placeholder, type, Icon, onChange, 
             value={value}
             onChange={(evt) => onChange(evt.target.value)}
             placeholder={placeholder}
-            className={`input-custom ${Icon ? "pl-9!" : ""} ${type === "password" ? "pr-9!" : ""} ${isError ? "border-red-600!" : ""}`}
+            className={`input-custom ${Icon ? "pl-9!" : ""} ${type === "password" ? "pr-9!" : ""} ${isError ? "border-text-danger!" : ""}`}
           />
           {Icon && <Icon className="size-4 text-placeholder absolute left-3" />}
           {type === "password" && (

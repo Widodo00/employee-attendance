@@ -10,12 +10,14 @@
   --color-primary-hover: #1d4ed8;
   --color-text-title: #0f172a;
   --color-text-label: #314158;
+  --color-text-white: #cad5e2;
   --color-bg-card: #e2e8f0;
   --color-text-caption: #62748e;
   --color-text-success: #008236;
   --color-bg-success: #f0fdf4;
   --color-icon-success: #00c950;
   --color-bg-primary: #f8fafc;
+  --color-text-danger: #e7000b;
 }
 
 body {
