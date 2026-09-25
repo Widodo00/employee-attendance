@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
 export interface fieldsInputInterface {
   label: string;
@@ -20,4 +21,39 @@ export interface inputGroupInterface<T> {
   errorForm: T;
   fields: fieldsInputInterface[];
   onChange: (value: string, name: string) => void;
+}
+
+export interface datePickerInterface {
+  startValue: string;
+  endValue: string;
+  startName: string;
+  endName: string;
+  onChange: (value: string, name: string) => void;
+}
+
+export interface optionsInterface {
+  value: string | number;
+  label: string;
+}
+
+export interface selectInterface {
+  value: optionsInterface;
+  name: string;
+  onChange: (value: optionsInterface | null) => void;
+  options: optionsInterface[];
+  placeholder: string;
+}
+
+export interface columnsInterface<T> {
+  cell: string;
+  row: (row: T) => ReactNode;
+}
+
+export interface paginationInterface<T> {
+  data: T[];
+  columns?: columnsInterface<T>[];
+  page: number;
+  total: number;
+  totalPage: number;
+  onChange?: (value: number) => void;
 }
