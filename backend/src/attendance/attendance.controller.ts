@@ -1,7 +1,17 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { AttendanceService } from './attendance.service.js';
 import { ClockInDto } from './dto/clock-in.dto.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { AttendanceHistoryDto } from './dto/attendance-history.dto.js';
+import { AttendanceSummaryDto } from './dto/attendance-summary.dto.js';
 
 @Controller('attendance')
 export class AttendanceController {
@@ -23,5 +33,16 @@ export class AttendanceController {
   @UseGuards(JwtAuthGuard)
   async clockOut(@Req() req: any) {
     return this.attendanceService.clockOut(req.user.sub);
+  }
+
+  @Get('history')
+  @UseGuards(JwtAuthGuard)
+  async getHistory(@Req() req: any, @Query() dto: AttendanceHistoryDto) {
+    return this.attendanceService.getHistory(req.user.sub, req.user.role, dto);
+  }
+
+  @Get('summary')
+  async getSummary(@Query() dto: AttendanceSummaryDto) {
+    return this.attendanceService.getSummary(dto);
   }
 }
