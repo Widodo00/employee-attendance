@@ -4,7 +4,7 @@ import type { profileInterface, profileStateInterface } from "../types/profile";
 const profileStore = create<profileStateInterface>((set) => ({
   profile: {
     name: "Jhon Doe",
-    role: "Administrator",
+    role: "Staff",
   },
   setProfile: (value: profileInterface) => set({ profile: value }),
 }));

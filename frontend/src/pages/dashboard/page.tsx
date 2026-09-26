@@ -1,13 +1,15 @@
 import dayjs from "dayjs";
 import NavBar from "../../component/navbar";
 import profileStore from "../../store/profileStore";
-import { Clock, LogIn, LogOut } from "lucide-react";
-import { useEffect, useState } from "react";
+import { LogIn, LogOut } from "lucide-react";
 import Badge from "../../component/badge";
 import type { paginationInterface } from "../../types/general";
 import DatePickerCustom from "../../component/datePickerCustom";
 import Pagination from "../../component/pagination";
 import SelectCustom from "../../component/selectCustom";
+import MonthPickerCustom from "../../component/monthPickerCustom";
+import { useState } from "react";
+import ClockCustom from "../../component/clock";
 
 interface dataTableInterface {
   date: Date;
@@ -19,12 +21,12 @@ interface dataTableInterface {
 interface filterInterface {
   startDate: string;
   endDate: string;
-  type?: string;
+  type: string;
 }
 
 export default function Dashboard() {
   const profile = profileStore((state) => state.profile);
-  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  const currentTime = new Date();
   const isClockIn = true;
   const isAdmin = profile.role === "Administrator";
 
@@ -39,10 +41,7 @@ export default function Dashboard() {
     type: "",
   });
 
-  const [filterSummary, setFilterSummary] = useState<filterInterface>({
-    startDate: dayjs(new Date()).startOf("M").format("YYYY-MM-DD"),
-    endDate: dayjs(new Date()).endOf("M").format("YYYY-MM-DD"),
-  });
+  const [filterSummary, setFilterSummary] = useState<string>(dayjs(new Date()).endOf("M").format("YYYY-MM"));
 
   const [dataTable, setDataTable] = useState<paginationInterface<dataTableInterface>>({
     data: [
@@ -77,14 +76,6 @@ export default function Dashboard() {
     { title: "Duration", caption: "" },
   ];
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <div className="w-full h-dvh flex flex-col items-center">
       <NavBar />
@@ -94,14 +85,7 @@ export default function Dashboard() {
             <p className="font-bold text-xl text-text-title">{isAdmin ? "Attendance Overview" : `Hai, ${profile.name}`}:</p>
             <p className="text-sm text-text-caption">{isAdmin ? "Monitor real-time attendance across your team." : dayjs(currentTime).format("dddd, MMMM DD, YYYY")}</p>
           </div>
-          {isAdmin ? (
-            <DatePickerCustom startName="startDate" endName="endDate" startValue={filterSummary.startDate} endValue={filterSummary.endDate} onChange={(value, name) => setFilterSummary((prev) => ({ ...prev, [name]: value }))} />
-          ) : (
-            <div className="rounded-xl border py-2.5 px-4 gap-2 bg-white border-bg-card flex items-center w-fit">
-              <Clock className="size-4 text-placeholder" />
-              <p className="font-semibold text-sm text-text-title">{dayjs(currentTime).format("HH:mm:ss")}</p>
-            </div>
-          )}
+          {isAdmin ? <MonthPickerCustom value={filterSummary} onChange={(value) => setFilterSummary(value)} /> : <ClockCustom />}
         </div>
 
         {isAdmin ? (

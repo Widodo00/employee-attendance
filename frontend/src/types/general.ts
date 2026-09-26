@@ -57,3 +57,8 @@ export interface paginationInterface<T> {
   totalPage: number;
   onChange?: (value: number) => void;
 }
+
+export interface monthPickerInterface {
+  value: string;
+  onChange: (value: string) => void;
+}
