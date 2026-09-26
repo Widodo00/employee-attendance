@@ -138,30 +138,21 @@ export class AttendanceService {
     userRole: 'EMPLOYEE' | 'ADMIN',
     dto: AttendanceHistoryDto,
   ) {
-    const startDate = parseDateOnly(dto.startDate);
-    const endDate = parseDateOnly(dto.endDate);
+    const startDate = new Date(dto.startDate);
+    const endDate = new Date(dto.endDate);
 
     if (startDate > endDate) {
       throw new BadRequestException('startDate cannot be greater than endDate');
     }
 
-    const today = getJakartaToday();
+    const today = new Date(
+      new Date().toLocaleDateString('en-CA', {
+        timeZone: 'Asia/Jakarta',
+      }),
+    );
 
     if (userRole === 'EMPLOYEE' && endDate >= today) {
       endDate.setUTCDate(today.getUTCDate() - 1);
-    }
-
-    if (startDate > endDate) {
-      return {
-        message: 'No attendance history found',
-        data: [],
-        meta: {
-          page: dto.page,
-          limit: dto.limit,
-          total: 0,
-          totalPages: 0,
-        },
-      };
     }
 
     const users = await this.prisma.user.findMany({
@@ -176,7 +167,6 @@ export class AttendanceService {
       select: {
         id: true,
         name: true,
-        email: true,
       },
     });
 
@@ -184,9 +174,9 @@ export class AttendanceService {
       return {
         message: 'No employee found',
         data: [],
-        meta: {
+        paging: {
           page: dto.page,
-          limit: dto.limit,
+          limit: 10,
           total: 0,
           totalPages: 0,
         },
@@ -216,12 +206,10 @@ export class AttendanceService {
     );
 
     const history: {
-      userId: string;
       name: string;
-      email: string;
       date: string;
-      clockIn: string | null;
-      clockOut: string | null;
+      clockIn: Date | null;
+      clockOut: Date | null;
       status: AttendanceHistoryStatus;
     }[] = [];
 
@@ -238,9 +226,9 @@ export class AttendanceService {
         if (!attendance) {
           status = AttendanceHistoryStatus.ABSENT;
         } else if (attendance.clockOut) {
-          status = AttendanceHistoryStatus.ATTENDANCE;
+          status = AttendanceHistoryStatus.PRESENT;
         } else {
-          status = AttendanceHistoryStatus.CLOCK_IN;
+          status = AttendanceHistoryStatus.CLOCKED_IN;
         }
 
         if (dto.status && status !== dto.status) {
@@ -248,12 +236,10 @@ export class AttendanceService {
         }
 
         history.push({
-          userId: user.id,
           name: user.name,
-          email: user.email,
           date: dateKey,
-          clockIn: formatDateTime(attendance?.clockIn ?? null),
-          clockOut: formatDateTime(attendance?.clockOut ?? null),
+          clockIn: attendance?.clockIn ?? null,
+          clockOut: attendance?.clockOut ?? null,
           status,
         });
       }
@@ -264,7 +250,7 @@ export class AttendanceService {
     const total = history.length;
 
     const page = dto.page ?? 1;
-    const limit = dto.limit ?? 10;
+    const limit = 10;
 
     const skip = (page - 1) * limit;
 
@@ -273,9 +259,8 @@ export class AttendanceService {
     return {
       message: 'Attendance history retrieved successfully',
       data,
-      meta: {
+      paging: {
         page,
-        limit,
         total,
         totalPages: Math.ceil(total / limit),
       },

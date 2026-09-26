@@ -45,11 +45,11 @@ export interface columnsInterface<T> {
 
 export interface paginationInterface<T> {
   data: T[];
-  columns?: columnsInterface<T>[];
+  columns: columnsInterface<T>[];
   page: number;
   total: number;
   totalPage: number;
-  onChange?: (value: number) => void;
+  onChange: (value: number) => void;
 }
 
 export interface monthPickerInterface {

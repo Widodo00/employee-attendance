@@ -2,9 +2,10 @@ import { IsDateString, IsEnum, IsInt, IsOptional, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export enum AttendanceHistoryStatus {
-  ATTENDANCE = 'ATTENDANCE',
-  CLOCK_IN = 'CLOCK_IN',
-  ABSENT = 'ABSENT',
+  PRESENT = 'Present',
+  CLOCKED_IN = 'Clocked In',
+  ABSENT = 'Absent',
+  '' = '',
 }
 
 export class AttendanceHistoryDto {
@@ -23,10 +24,4 @@ export class AttendanceHistoryDto {
   @IsInt()
   @Min(1)
   page: number = 1;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  limit: number = 10;
 }

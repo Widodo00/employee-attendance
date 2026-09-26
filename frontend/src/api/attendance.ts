@@ -1,4 +1,4 @@
-import type { locationInterface, todayAttendanceInterface } from "../types/attendance";
+import { type locationInterface, type tableInterface, type todayAttendanceInterface } from "../types/attendance";
 import api from "../utils/api";
 
 interface successInterface {
@@ -6,13 +6,17 @@ interface successInterface {
 }
 
 export const getTodayAttendance = () => {
-  return api.get<todayAttendanceInterface>("/attendance/today");
+  return api.get<todayAttendanceInterface>("attendance/today");
 };
 
 export const postClockIn = (body: locationInterface) => {
-  return api.post<successInterface>("/attendance/clock-in", body);
+  return api.post<successInterface>("attendance/clock-in", body);
 };
 
 export const patchClockOut = () => {
-  return api.patch<successInterface>("/attendance/clock-out");
+  return api.patch<successInterface>("attendance/clock-out");
+};
+
+export const getHistory = (params: string) => {
+  return api.get<tableInterface>(`attendance/history${params}`);
 };

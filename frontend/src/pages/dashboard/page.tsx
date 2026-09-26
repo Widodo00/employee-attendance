@@ -3,7 +3,6 @@ import NavBar from "../../component/navbar";
 import profileStore from "../../store/profileStore";
 import { LogIn, LogOut } from "lucide-react";
 import Badge from "../../component/badge";
-import type { paginationInterface } from "../../types/general";
 import DatePickerCustom from "../../component/datePickerCustom";
 import Pagination from "../../component/pagination";
 import SelectCustom from "../../component/selectCustom";
@@ -11,22 +10,15 @@ import MonthPickerCustom from "../../component/monthPickerCustom";
 import { useEffect, useState } from "react";
 import ClockCustom from "../../component/clock";
 import loadingStore from "../../store/loadingStore";
-import { getTodayAttendance, patchClockOut, postClockIn } from "../../api/attendance";
+import { getHistory, getTodayAttendance, patchClockOut, postClockIn } from "../../api/attendance";
 import { toast } from "react-toastify";
-import type { dataTodayAttendanceInterface, locationInterface } from "../../types/attendance";
+import type { dataTableInterface, dataTodayAttendanceInterface, locationInterface, tableInterface } from "../../types/attendance";
 import { Formatting } from "../../utils/formatting";
-
-interface dataTableInterface {
-  date: Date;
-  clockIn: Date;
-  clockOut: Date;
-  status: string;
-}
 
 interface filterInterface {
   startDate: string;
   endDate: string;
-  type: string;
+  status: string;
 }
 
 export default function Dashboard() {
@@ -43,24 +35,21 @@ export default function Dashboard() {
   ];
 
   const [filter, setFilter] = useState<filterInterface>({
-    startDate: dayjs(new Date()).startOf("M").format("YYYY-MM-DD"),
-    endDate: dayjs(new Date()).endOf("M").format("YYYY-MM-DD"),
-    type: "",
+    startDate: "",
+    endDate: "",
+    status: "",
   });
 
   const [filterSummary, setFilterSummary] = useState<string>(dayjs(new Date()).endOf("M").format("YYYY-MM"));
 
-  const [dataTable, setDataTable] = useState<paginationInterface<dataTableInterface>>({
-    data: [
-      { date: new Date(), clockIn: new Date(), clockOut: new Date(), status: "Present" },
-      { date: new Date(), clockIn: new Date(), clockOut: new Date(), status: "Present" },
-      { date: new Date(), clockIn: new Date(), clockOut: new Date(), status: "Absent" },
-      { date: new Date(), clockIn: new Date(), clockOut: new Date(), status: "Present" },
-      { date: new Date(), clockIn: new Date(), clockOut: new Date(), status: "Present" },
-    ],
-    page: 1,
-    total: 23,
-    totalPage: 3,
+  const [dataTable, setDataTable] = useState<tableInterface>({
+    data: [],
+    message: "",
+    paging: {
+      page: 1,
+      total: 0,
+      totalPages: 1,
+    },
   });
 
   const summary = [
@@ -72,8 +61,9 @@ export default function Dashboard() {
 
   const columns = [
     { cell: "Date", row: (row: dataTableInterface) => dayjs(row.date).format("ddd, MMM DD, YYYY") },
-    { cell: "Clock In", row: (row: dataTableInterface) => dayjs(row.clockIn).format("HH:mm") },
-    { cell: "Clock Out", row: (row: dataTableInterface) => dayjs(row.clockOut).format("HH:mm") },
+    ...(isAdmin ? [{ cell: "Name", row: (row: dataTableInterface) => row.name }] : []),
+    { cell: "Clock In", row: (row: dataTableInterface) => (row.clockIn ? dayjs(row.clockIn).format("HH:mm") : "-") },
+    { cell: "Clock Out", row: (row: dataTableInterface) => (row.clockOut ? dayjs(row.clockOut).format("HH:mm") : "-") },
     { cell: "Status", row: (row: dataTableInterface) => <Badge content={row.status} type={row.status === "Present" ? 1 : 0} /> },
   ];
 
@@ -132,18 +122,44 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => {
+  const onChangePage = (value: number) => {
+    fetchData(value);
+  };
+
+  const fetchData = (page = 1) => {
     setLoading(true);
-    getTodayAttendance()
+    getHistory(`?page=${page}&startDate=${filter.startDate || dayjs(profile.serverTime).startOf("M").format("YYYY-MM-DD")}&endDate=${filter.endDate || dayjs(profile.serverTime).format("YYYY-MM-DD")}&status=${filter.status}`)
       .then((res) => {
-        setDataToday(res.data.data);
+        setDataTable(res.data);
         setLoading(false);
       })
       .catch((err) => {
         toast.error(err.message || "Something went wrong");
         setLoading(false);
       });
-  }, []);
+  };
+
+  useEffect(() => {
+    if (filter.endDate || filter.startDate || filter.status) {
+      fetchData();
+    }
+  }, [filter]);
+
+  useEffect(() => {
+    if (profile.serverTime) {
+      setLoading(true);
+      Promise.all([getTodayAttendance(), getHistory(`?page=1&startDate=${dayjs(profile.serverTime).startOf("M").format("YYYY-MM-DD")}&endDate=${filter.endDate || dayjs(profile.serverTime).format("YYYY-MM-DD")}`)])
+        .then((res) => {
+          setDataToday(res[0].data.data);
+          setDataTable(res[1].data);
+          setLoading(false);
+        })
+        .catch((err) => {
+          toast.error(err.message || "Something went wrong");
+          setLoading(false);
+        });
+    }
+  }, [profile]);
 
   return (
     <div className="w-full h-dvh flex flex-col items-center">
@@ -202,13 +218,19 @@ export default function Dashboard() {
           <div className="flex flex-col gap-4 p-5">
             <p className="font-semibold text-text-title">Attendance History</p>
             <div className="flex flex-col gap-3 md:flex-row md:items-end">
-              <DatePickerCustom startName="startDate" endName="endDate" startValue={filter.startDate} endValue={filter.endDate} onChange={(value, name) => setFilter((prev) => ({ ...prev, [name]: value }))} />
+              <DatePickerCustom
+                startName="startDate"
+                endName="endDate"
+                startValue={filter.startDate || dayjs(profile.serverTime).startOf("M").format("YYYY-MM-DD")}
+                endValue={filter.endDate || dayjs(profile.serverTime).format("YYYY-MM-DD")}
+                onChange={(value, name) => setFilter((prev) => ({ ...prev, [name]: value }))}
+              />
               <div className="w-37.5">
-                <SelectCustom name="type" options={option} placeholder="Select type" onChange={(evt) => setFilter((prev) => ({ ...prev, type: evt!.value as string }))} value={filter.type!} />
+                <SelectCustom name="type" options={option} placeholder="Select type" onChange={(evt) => setFilter((prev) => ({ ...prev, status: evt!.value as string }))} value={filter.status!} />
               </div>
             </div>
           </div>
-          <Pagination data={dataTable.data} page={dataTable.page} total={dataTable.total} totalPage={dataTable.totalPage} onChange={(value) => setDataTable((prev) => ({ ...prev, page: value }))} columns={columns} />
+          <Pagination data={dataTable.data} page={dataTable.paging.page} total={dataTable.paging.total} totalPage={dataTable.paging.totalPages} onChange={onChangePage} columns={columns} />
         </div>
       </div>
     </div>
