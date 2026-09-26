@@ -2,18 +2,15 @@ import { ChevronDown, FingerprintPattern, LogOut } from "lucide-react";
 import { Formatting } from "../utils/formatting";
 import { Popover } from "react-tiny-popover";
 import { useState } from "react";
+import profileStore from "../store/profileStore";
 
 export default function NavBar() {
+  const profile = profileStore((state) => state.profile);
   const [openPopOver, setOpenPopOver] = useState<boolean>(false);
 
-  const profile = {
-    role: "Administrator",
-    name: "Jhon Doe",
-  };
-
   return (
-    <div className="bg-text-title border-b border-white h-14 flex justify-center">
-      <div className="max-w-full md:max-w-7xl justify-between px-4 flex w-full">
+    <div className="bg-text-title border-b border-white flex justify-center sticky top-0 w-full">
+      <div className="max-w-full md:max-w-7xl justify-between px-4 flex w-full h-14">
         <div className="flex gap-3 items-center">
           <div className="size-7 bg-primary rounded-lg flex items-center justify-center">
             <FingerprintPattern className="size-4 text-white" />

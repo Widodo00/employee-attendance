@@ -1,39 +1,161 @@
-import { useState } from "react";
+import dayjs from "dayjs";
 import NavBar from "../../component/navbar";
-import Pagination from "../../component/pagination";
+import profileStore from "../../store/profileStore";
+import { Clock, LogIn, LogOut } from "lucide-react";
+import { useEffect, useState } from "react";
+import Badge from "../../component/badge";
 import type { paginationInterface } from "../../types/general";
+import DatePickerCustom from "../../component/datePickerCustom";
+import Pagination from "../../component/pagination";
+import SelectCustom from "../../component/selectCustom";
 
-interface dataInterface {
-  cell1: string;
-  cell2: string;
+interface dataTableInterface {
+  date: Date;
+  clockIn: Date;
+  clockOut: Date;
+  status: string;
+}
+
+interface filterInterface {
+  startDate: string;
+  endDate: string;
+  type?: string;
 }
 
 export default function Dashboard() {
-  const [data, setData] = useState<paginationInterface<dataInterface>>({
-    data: [
-      { cell1: "oke", cell2: "oke2" },
-      { cell1: "oke1", cell2: "oke21" },
-      { cell1: "oke2", cell2: "oke22" },
-    ],
-    page: 1,
-    total: 3,
-    totalPage: 10,
-  });
+  const profile = profileStore((state) => state.profile);
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  const isClockIn = true;
+  const isAdmin = profile.role === "Administrator";
 
-  const column = [
-    { cell: "cell 1", row: (row: dataInterface) => row.cell1 },
-    { cell: "cell 2", row: (row: dataInterface) => <div>{row.cell2}</div> },
+  const option = [
+    { label: "Present", value: "Present" },
+    { label: "Absent", value: "Absent" },
   ];
 
-  const handleOnChange = (value: number) => {
-    console.log("coba", value);
-    setData((prev) => ({ ...prev, page: value }));
-  };
+  const [filter, setFilter] = useState<filterInterface>({
+    startDate: dayjs(new Date()).startOf("M").format("YYYY-MM-DD"),
+    endDate: dayjs(new Date()).endOf("M").format("YYYY-MM-DD"),
+    type: "",
+  });
+
+  const [filterSummary, setFilterSummary] = useState<filterInterface>({
+    startDate: dayjs(new Date()).startOf("M").format("YYYY-MM-DD"),
+    endDate: dayjs(new Date()).endOf("M").format("YYYY-MM-DD"),
+  });
+
+  const [dataTable, setDataTable] = useState<paginationInterface<dataTableInterface>>({
+    data: [
+      { date: new Date(), clockIn: new Date(), clockOut: new Date(), status: "Present" },
+      { date: new Date(), clockIn: new Date(), clockOut: new Date(), status: "Present" },
+      { date: new Date(), clockIn: new Date(), clockOut: new Date(), status: "Absent" },
+      { date: new Date(), clockIn: new Date(), clockOut: new Date(), status: "Present" },
+      { date: new Date(), clockIn: new Date(), clockOut: new Date(), status: "Present" },
+    ],
+    page: 1,
+    total: 23,
+    totalPage: 3,
+  });
+
+  const summary = [
+    { title: "Total Employees", value: 12, footer: "Active headcount", color: "text-text-title" },
+    { title: "Present Today", value: 6, footer: "50% completion rate", color: "text-text-success" },
+    { title: "Currently In", value: 3, footer: "Still on premises", color: "text-text-neutral" },
+    { title: "Not Clocked In", value: 3, footer: "Pending action", color: "text-text-danger" },
+  ];
+
+  const columns = [
+    { cell: "Date", row: (row: dataTableInterface) => dayjs(row.date).format("ddd, MMM DD, YYYY") },
+    { cell: "Clock In", row: (row: dataTableInterface) => dayjs(row.clockIn).format("HH:mm") },
+    { cell: "Clock Out", row: (row: dataTableInterface) => dayjs(row.clockOut).format("HH:mm") },
+    { cell: "Status", row: (row: dataTableInterface) => <Badge content={row.status} type={row.status === "Present" ? 1 : 0} /> },
+  ];
+
+  const fieldClockIn = [
+    { title: "Clock In", caption: dayjs(new Date()).format("HH:mm") },
+    { title: "Clock Out", caption: "" },
+    { title: "Duration", caption: "" },
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <div className="w-full h-dvh">
+    <div className="w-full h-dvh flex flex-col items-center">
       <NavBar />
-      <Pagination columns={column} data={data.data} page={data.page} total={data.total} totalPage={data.totalPage} onChange={handleOnChange} />
+      <div className="py-6 px-4 flex flex-col gap-6 w-full max-w-full md:max-w-7xl md:py-8 md:px-6">
+        <div className="flex flex-col gap-4 md:flex-row md:justify-between">
+          <div className="flex flex-col gap-0.5">
+            <p className="font-bold text-xl text-text-title">{isAdmin ? "Attendance Overview" : `Hai, ${profile.name}`}:</p>
+            <p className="text-sm text-text-caption">{isAdmin ? "Monitor real-time attendance across your team." : dayjs(currentTime).format("dddd, MMMM DD, YYYY")}</p>
+          </div>
+          {isAdmin ? (
+            <DatePickerCustom startName="startDate" endName="endDate" startValue={filterSummary.startDate} endValue={filterSummary.endDate} onChange={(value, name) => setFilterSummary((prev) => ({ ...prev, [name]: value }))} />
+          ) : (
+            <div className="rounded-xl border py-2.5 px-4 gap-2 bg-white border-bg-card flex items-center w-fit">
+              <Clock className="size-4 text-placeholder" />
+              <p className="font-semibold text-sm text-text-title">{dayjs(currentTime).format("HH:mm:ss")}</p>
+            </div>
+          )}
+        </div>
+
+        {isAdmin ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {summary.map((item) => (
+              <div key={item.title} className="rounded-xl border p-5 bg-white border-bg-card">
+                <p className="text-xs font-medium text-text-caption">{item.title}</p>
+                <p className={`mt-1.5 font-bold text-2xl ${item.color}`}>{item.value}</p>
+                <p className="mt-1 text-xs text-placeholder">{item.footer}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-xl border p-6 bg-white border-bg-card flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-4 flex-1">
+              <Badge content={isClockIn ? "Clocked In" : "Not Clocked In"} type={isClockIn ? 2 : 0} />
+              <div className="grid grid-cols-3 gap-4">
+                {fieldClockIn.map((item) => (
+                  <div className="flex flex-col gap-1">
+                    <p className="text-xs text-placeholder">{item.title}</p>
+                    <p className="text-text-title font-bold text-lg">{item.caption || "-"}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <button className={`btn-primary md:px-8 ${isClockIn ? "bg-text-danger!" : ""}`}>
+              {isClockIn ? (
+                <>
+                  <LogOut />
+                  <p>Clock Out</p>
+                </>
+              ) : (
+                <>
+                  <LogIn />
+                  <p>Clock In</p>
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
+        <div className="rounded-xl border bg-white border-bg-card flex flex-col">
+          <div className="flex flex-col gap-4 p-5">
+            <p className="font-semibold text-text-title">Attendance History</p>
+            <div className="flex flex-col gap-3 md:flex-row md:items-end">
+              <DatePickerCustom startName="startDate" endName="endDate" startValue={filter.startDate} endValue={filter.endDate} onChange={(value, name) => setFilter((prev) => ({ ...prev, [name]: value }))} />
+              <div className="w-37.5">
+                <SelectCustom name="type" options={option} placeholder="Select type" onChange={(evt) => setFilter((prev) => ({ ...prev, type: evt!.value as string }))} value={filter.type!} />
+              </div>
+            </div>
+          </div>
+          <Pagination data={dataTable.data} page={dataTable.page} total={dataTable.total} totalPage={dataTable.totalPage} onChange={(value) => setDataTable((prev) => ({ ...prev, page: value }))} columns={columns} />
+        </div>
+      </div>
     </div>
   );
 }

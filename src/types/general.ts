@@ -37,7 +37,7 @@ export interface optionsInterface {
 }
 
 export interface selectInterface {
-  value: optionsInterface;
+  value: string | number;
   name: string;
   onChange: (value: optionsInterface | null) => void;
   options: optionsInterface[];

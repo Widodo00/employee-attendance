@@ -16,6 +16,15 @@
   --color-text-success: #008236;
   --color-bg-success: #f0fdf4;
   --color-icon-success: #00c950;
+
+  --color-text-warning: #ca3500;
+  --color-bg-warning: #fff7ed;
+  --color-icon-warning: #ff8904;
+
+  --color-text-neutral: #1447e6;
+  --color-bg-neutral: #eff6ff;
+  --color-icon-neutral: #2b7fff;
+
   --color-bg-primary: #f8fafc;
   --color-text-danger: #e7000b;
 }
@@ -30,7 +39,7 @@ body {
 }
 
 .btn-primary {
-  @apply h-11 flex items-center justify-center rounded-xl bg-primary shadow-sm font-semibold text-sm text-white cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-not-allowed hover:bg-primary-hover;
+  @apply h-11 flex gap-2 items-center justify-center rounded-xl bg-primary shadow-sm font-semibold text-sm text-white cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-not-allowed hover:bg-primary-hover;
 }
 
 .btn-secondary {

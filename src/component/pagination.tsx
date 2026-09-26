@@ -25,28 +25,30 @@ export default function Pagination<T>({ data, columns, page, total, totalPage, o
 
   return (
     <div className="flex flex-col">
-      <table>
-        <thead>
-          <tr>
-            {columns!.map((item, index) => (
-              <th key={index} className="border-y border-border py-3 px-5 bg-bg-primary font-semibold text-xs text-text-caption text-start">
-                {item.cell.toUpperCase()}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((item, index) => (
-            <tr key={index}>
-              {columns!.map((itemCol, indexCol) => (
-                <td key={indexCol} className="border-b border-border py-3.5 px-5 font-medium text-sm text-body">
-                  {itemCol.row(item)}
-                </td>
+      <div className="overflow-auto">
+        <table className="w-full">
+          <thead>
+            <tr>
+              {columns!.map((item, index) => (
+                <th key={index} className="border-y border-border py-3 px-5 bg-bg-primary font-semibold text-xs text-text-caption text-start text-nowrap">
+                  {item.cell.toUpperCase()}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {data.map((item, index) => (
+              <tr key={index}>
+                {columns!.map((itemCol, indexCol) => (
+                  <td key={indexCol} className="border-b border-border py-3.5 px-5 font-medium text-sm text-body text-nowrap">
+                    {itemCol.row(item)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <div className="p-5 flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
         <p className="text-xs text-text-caption">
           Showing {(page - 1) * 10 + 1}-{(page - 1) * 10 + 10} of {total} results
