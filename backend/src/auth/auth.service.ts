@@ -102,6 +102,6 @@ export class AuthService {
       },
     });
 
-    return user;
+    return { user, serverTime: new Date().toISOString() };
   }
 }
