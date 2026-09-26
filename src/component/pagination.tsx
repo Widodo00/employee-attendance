@@ -47,22 +47,25 @@ export default function Pagination<T>({ data, columns, page, total, totalPage, o
           ))}
         </tbody>
       </table>
-
-      <p>
-        Showing {(page - 1) * 10 + 1}-{(page - 1) * 10 + 10} of {total} results
-      </p>
-      <div className="flex">
-        <button className="btn-secondary" disabled={page === 1} onClick={() => onChange!(page - 1)}>
-          <ArrowLeft className="size-4" />
-          <p>Prev</p>
-        </button>
-        {visiblePages.map((item) => (
-          <button key={item}>{item}</button>
-        ))}
-        <button className="btn-secondary" disabled={page === totalPage} onClick={() => onChange!(page + 1)}>
-          <p>Next</p>
-          <ArrowRight className="size-4" />
-        </button>
+      <div className="p-5 flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
+        <p className="text-xs text-text-caption">
+          Showing {(page - 1) * 10 + 1}-{(page - 1) * 10 + 10} of {total} results
+        </p>
+        <div className="flex gap-1">
+          <button className="btn-secondary" disabled={page === 1} onClick={() => onChange!(page - 1)}>
+            <ArrowLeft className="size-4" />
+            <p>Prev</p>
+          </button>
+          {visiblePages.map((item) => (
+            <button key={item} className={item === page ? "btn-primary size-8! rounded-lg! text-xs! font-medium!" : "btn-secondary w-8 px-0! justify-center"} onClick={() => page !== item && onChange!(item)}>
+              {item}
+            </button>
+          ))}
+          <button className="btn-secondary" disabled={page === totalPage} onClick={() => onChange!(page + 1)}>
+            <p>Next</p>
+            <ArrowRight className="size-4" />
+          </button>
+        </div>
       </div>
     </div>
   );
