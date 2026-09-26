@@ -1,5 +1,7 @@
 import CryptoJS from "crypto-js";
 import Cookies from "js-cookie";
+import { toast } from "react-toastify";
+import type { locationInterface } from "../types/attendance";
 
 export const Formatting = {
   profileName: function (value: string) {
@@ -31,5 +33,26 @@ export const Formatting = {
 
   deleteAllToken: function () {
     Cookies.remove(import.meta.env.VITE_PUBLIC_KEY_TOKEN || "");
+  },
+
+  getLocation: function () {
+    return new Promise<locationInterface>((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+
+          resolve({
+            latitude,
+            longitude,
+          });
+        },
+        (error) => {
+          if (error.message.includes("denied")) {
+            toast.warning("Please allow the browser to access your location");
+          }
+          reject(error);
+        },
+      );
+    });
   },
 };

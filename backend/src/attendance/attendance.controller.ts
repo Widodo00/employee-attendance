@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Patch,
   Post,
   Query,
   Req,
@@ -29,7 +30,7 @@ export class AttendanceController {
     return this.attendanceService.getToday(req.user.sub);
   }
 
-  @Post('clock-out')
+  @Patch('clock-out')
   @UseGuards(JwtAuthGuard)
   async clockOut(@Req() req: any) {
     return this.attendanceService.clockOut(req.user.sub);

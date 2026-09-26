@@ -11,9 +11,10 @@ import MonthPickerCustom from "../../component/monthPickerCustom";
 import { useEffect, useState } from "react";
 import ClockCustom from "../../component/clock";
 import loadingStore from "../../store/loadingStore";
-import { getTodayAttendance } from "../../api/attendance";
+import { getTodayAttendance, patchClockOut, postClockIn } from "../../api/attendance";
 import { toast } from "react-toastify";
-import type { dataTodayAttendanceInterface } from "../../types/attendance";
+import type { dataTodayAttendanceInterface, locationInterface } from "../../types/attendance";
+import { Formatting } from "../../utils/formatting";
 
 interface dataTableInterface {
   date: Date;
@@ -34,6 +35,7 @@ export default function Dashboard() {
   const isAdmin = profile.user.role === "ADMIN";
   const [dataToday, setDataToday] = useState<dataTodayAttendanceInterface | null>(null);
   const isClockIn = dataToday?.clockIn;
+  const isComplete = dataToday?.clockIn && dataToday.clockOut;
 
   const option = [
     { label: "Present", value: "Present" },
@@ -87,6 +89,49 @@ export default function Dashboard() {
     { title: "Duration", caption: dataToday?.elapsedSeconds ? parseHourMinute(dataToday?.elapsedSeconds) : "" },
   ];
 
+  const onSubmit = async () => {
+    if (isClockIn) {
+      setLoading(true);
+      patchClockOut()
+        .then(() => {
+          getTodayAttendance()
+            .then((res) => {
+              setDataToday(res.data.data);
+              setLoading(false);
+            })
+            .catch((err) => {
+              toast.error(err.message || "Something went wrong");
+              setLoading(false);
+            });
+        })
+        .catch((err) => {
+          toast.error(err.message.toString() || "Something went wrong");
+          setLoading(false);
+        });
+    } else {
+      const location: locationInterface = await Formatting.getLocation();
+      if (location) {
+        setLoading(true);
+        postClockIn(location)
+          .then(() => {
+            getTodayAttendance()
+              .then((res) => {
+                setDataToday(res.data.data);
+                setLoading(false);
+              })
+              .catch((err) => {
+                toast.error(err.message || "Something went wrong");
+                setLoading(false);
+              });
+          })
+          .catch((err) => {
+            toast.error(err.message.toString() || "Something went wrong");
+            setLoading(false);
+          });
+      }
+    }
+  };
+
   useEffect(() => {
     setLoading(true);
     getTodayAttendance()
@@ -125,7 +170,7 @@ export default function Dashboard() {
         ) : (
           <div className="rounded-xl border p-6 bg-white border-bg-card flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-col gap-4 flex-1">
-              <Badge content={isClockIn ? "Clocked In" : "Not Clocked In"} type={isClockIn ? 2 : 0} />
+              <Badge content={isComplete ? "Complete" : isClockIn ? "Clocked In" : "Not Clocked In"} type={isComplete ? 1 : isClockIn ? 2 : 0} />
               <div className="grid grid-cols-3 gap-4">
                 {fieldClockIn.map((item) => (
                   <div className="flex flex-col gap-1">
@@ -135,19 +180,21 @@ export default function Dashboard() {
                 ))}
               </div>
             </div>
-            <button className={`btn-primary md:px-8 ${isClockIn ? "bg-text-danger!" : ""}`}>
-              {isClockIn ? (
-                <>
-                  <LogOut />
-                  <p>Clock Out</p>
-                </>
-              ) : (
-                <>
-                  <LogIn />
-                  <p>Clock In</p>
-                </>
-              )}
-            </button>
+            {!isComplete && (
+              <button className={`btn-primary md:px-8 ${isClockIn ? "bg-text-danger!" : ""}`} onClick={onSubmit}>
+                {isClockIn ? (
+                  <>
+                    <LogOut />
+                    <p>Clock Out</p>
+                  </>
+                ) : (
+                  <>
+                    <LogIn />
+                    <p>Clock In</p>
+                  </>
+                )}
+              </button>
+            )}
           </div>
         )}
 

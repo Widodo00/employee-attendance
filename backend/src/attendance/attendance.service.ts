@@ -51,14 +51,6 @@ export class AttendanceService {
 
     return {
       message: 'Clock in successful',
-      data: {
-        id: attendance.id,
-        date: attendance.date,
-        clockIn: attendance.clockIn,
-        clockOut: attendance.clockOut,
-        latitude: attendance.latitude,
-        longitude: attendance.longitude,
-      },
     };
   }
 
@@ -103,8 +95,12 @@ export class AttendanceService {
   }
 
   async clockOut(userId: string) {
-    const now = getJakartaNow();
-    const date = getJakartaToday();
+    const now = new Date();
+    const date = new Date(
+      now.toLocaleDateString('en-CA', {
+        timeZone: 'Asia/Jakarta',
+      }),
+    );
 
     const attendance = await this.prisma.attendance.findUnique({
       where: {
@@ -123,7 +119,7 @@ export class AttendanceService {
       throw new BadRequestException('You have already clocked out today');
     }
 
-    const updatedAttendance = await this.prisma.attendance.update({
+    await this.prisma.attendance.update({
       where: {
         id: attendance.id,
       },
@@ -132,26 +128,8 @@ export class AttendanceService {
       },
     });
 
-    const elapsedSeconds = Math.max(
-      0,
-      Math.floor(
-        (updatedAttendance.clockOut!.getTime() -
-          updatedAttendance.clockIn.getTime()) /
-          1000,
-      ),
-    );
-
     return {
       message: 'Clock out successful',
-      data: {
-        id: updatedAttendance.id,
-        date: formatDate(updatedAttendance.date),
-        clockIn: formatDateTime(updatedAttendance.clockIn),
-        clockOut: formatDateTime(updatedAttendance.clockOut),
-        latitude: updatedAttendance.latitude,
-        longitude: updatedAttendance.longitude,
-        elapsedSeconds,
-      },
     };
   }
 
