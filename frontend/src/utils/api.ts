@@ -1,15 +1,11 @@
-import axios, { type InternalAxiosRequestConfig } from "axios";
+import axios from "axios";
 import { Formatting } from "./formatting";
-
-interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
-  withoutToken?: boolean;
-}
+import type { CustomAxiosRequestConfig } from "../types/general";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   headers: {
     "Content-Type": "application/json",
-    Authorization: Formatting.getToken(import.meta.env.VITE_PUBLIC_KEY_TOKEN),
   },
 });
 

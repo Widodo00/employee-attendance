@@ -1,3 +1,4 @@
+import type { InternalAxiosRequestConfig } from "axios";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -54,4 +55,8 @@ export interface paginationInterface<T> {
 export interface monthPickerInterface {
   value: string;
   onChange: (value: string) => void;
+}
+
+export interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
+  withoutToken?: boolean;
 }

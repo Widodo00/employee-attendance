@@ -8,8 +8,12 @@ import DatePickerCustom from "../../component/datePickerCustom";
 import Pagination from "../../component/pagination";
 import SelectCustom from "../../component/selectCustom";
 import MonthPickerCustom from "../../component/monthPickerCustom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ClockCustom from "../../component/clock";
+import loadingStore from "../../store/loadingStore";
+import { getTodayAttendance } from "../../api/attendance";
+import { toast } from "react-toastify";
+import type { dataTodayAttendanceInterface } from "../../types/attendance";
 
 interface dataTableInterface {
   date: Date;
@@ -25,9 +29,11 @@ interface filterInterface {
 }
 
 export default function Dashboard() {
+  const setLoading = loadingStore((state) => state.setLoading);
   const profile = profileStore((state) => state.profile);
-  const isClockIn = true;
   const isAdmin = profile.user.role === "ADMIN";
+  const [dataToday, setDataToday] = useState<dataTodayAttendanceInterface | null>(null);
+  const isClockIn = dataToday?.clockIn;
 
   const option = [
     { label: "Present", value: "Present" },
@@ -69,11 +75,30 @@ export default function Dashboard() {
     { cell: "Status", row: (row: dataTableInterface) => <Badge content={row.status} type={row.status === "Present" ? 1 : 0} /> },
   ];
 
+  const parseHourMinute = (value: number) => {
+    const hour = Math.floor(value / 360);
+    const minute = Math.floor(value / 60);
+    return `${hour}h ${minute}m`;
+  };
+
   const fieldClockIn = [
-    { title: "Clock In", caption: dayjs(new Date()).format("HH:mm") },
-    { title: "Clock Out", caption: "" },
-    { title: "Duration", caption: "" },
+    { title: "Clock In", caption: dataToday?.clockIn ? dayjs(dataToday?.clockIn).format("HH:mm") : "-" },
+    { title: "Clock Out", caption: dataToday?.clockOut ? dayjs(dataToday?.clockOut).format("HH:mm") : "-" },
+    { title: "Duration", caption: dataToday?.elapsedSeconds ? parseHourMinute(dataToday?.elapsedSeconds) : "" },
   ];
+
+  useEffect(() => {
+    setLoading(true);
+    getTodayAttendance()
+      .then((res) => {
+        setDataToday(res.data.data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        toast.error(err.message || "Something went wrong");
+        setLoading(false);
+      });
+  }, []);
 
   return (
     <div className="w-full h-dvh flex flex-col items-center">

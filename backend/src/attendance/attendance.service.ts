@@ -5,6 +5,7 @@ import {
   AttendanceHistoryDto,
   AttendanceHistoryStatus,
 } from './dto/attendance-history.dto.js';
+import { AttendanceSummaryDto } from './dto/attendance-summary.dto.js';
 import {
   formatDate,
   formatDateTime,
@@ -12,15 +13,18 @@ import {
   getJakartaToday,
   parseDateOnly,
 } from '../helper/time-zone.js';
-import { AttendanceSummaryDto } from './dto/attendance-summary.dto.js';
 
 @Injectable()
 export class AttendanceService {
   constructor(private readonly prisma: PrismaService) {}
 
   async clockIn(userId: string, dto: ClockInDto) {
-    const now = getJakartaNow();
-    const date = getJakartaToday();
+    const now = new Date();
+    const date = new Date(
+      now.toLocaleDateString('en-CA', {
+        timeZone: 'Asia/Jakarta',
+      }),
+    );
 
     const existingAttendance = await this.prisma.attendance.findUnique({
       where: {
@@ -49,9 +53,9 @@ export class AttendanceService {
       message: 'Clock in successful',
       data: {
         id: attendance.id,
-        date: formatDate(attendance.date),
-        clockIn: formatDateTime(attendance.clockIn),
-        clockOut: formatDateTime(attendance.clockOut),
+        date: attendance.date,
+        clockIn: attendance.clockIn,
+        clockOut: attendance.clockOut,
         latitude: attendance.latitude,
         longitude: attendance.longitude,
       },
@@ -59,8 +63,12 @@ export class AttendanceService {
   }
 
   async getToday(userId: string) {
-    const now = getJakartaNow();
-    const date = getJakartaToday();
+    const now = new Date();
+    const date = new Date(
+      now.toLocaleDateString('en-CA', {
+        timeZone: 'Asia/Jakarta',
+      }),
+    );
 
     const attendance = await this.prisma.attendance.findUnique({
       where: {
@@ -72,10 +80,7 @@ export class AttendanceService {
     });
 
     if (!attendance) {
-      return {
-        message: 'No attendance found for today',
-        data: null,
-      };
+      return { message: 'Not attendance', data: null };
     }
 
     const endTime = attendance.clockOut ?? now;
@@ -86,12 +91,10 @@ export class AttendanceService {
     );
 
     return {
-      message: "Today's attendance",
+      message: 'Attendance',
       data: {
-        id: attendance.id,
-        date: formatDate(attendance.date),
-        clockIn: formatDateTime(attendance.clockIn),
-        clockOut: formatDateTime(attendance.clockOut),
+        clockIn: attendance.clockIn,
+        clockOut: attendance.clockOut,
         latitude: attendance.latitude,
         longitude: attendance.longitude,
         elapsedSeconds,
