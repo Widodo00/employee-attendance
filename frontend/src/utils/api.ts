@@ -1,17 +1,26 @@
-import axios from "axios";
+import axios, { type InternalAxiosRequestConfig } from "axios";
+import { Formatting } from "./formatting";
+
+interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
+  withoutToken?: boolean;
+}
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   headers: {
     "Content-Type": "application/json",
+    Authorization: Formatting.getToken(import.meta.env.VITE_PUBLIC_KEY_TOKEN),
   },
 });
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
+api.interceptors.request.use((config: CustomAxiosRequestConfig) => {
+  const withoutToken = config.withoutToken ?? false;
 
-  if (token) {
+  if (!withoutToken) {
+    const token = Formatting.getToken(import.meta.env.VITE_PUBLIC_KEY_TOKEN);
     config.headers.Authorization = `Bearer ${token}`;
+
+    return config;
   }
 
   return config;

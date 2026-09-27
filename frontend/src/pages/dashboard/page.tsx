@@ -26,9 +26,8 @@ interface filterInterface {
 
 export default function Dashboard() {
   const profile = profileStore((state) => state.profile);
-  const currentTime = new Date();
   const isClockIn = true;
-  const isAdmin = profile.role === "Administrator";
+  const isAdmin = profile.user.role === "ADMIN";
 
   const option = [
     { label: "Present", value: "Present" },
@@ -82,8 +81,8 @@ export default function Dashboard() {
       <div className="py-6 px-4 flex flex-col gap-6 w-full max-w-full md:max-w-7xl md:py-8 md:px-6">
         <div className="flex flex-col gap-4 md:flex-row md:justify-between">
           <div className="flex flex-col gap-0.5">
-            <p className="font-bold text-xl text-text-title">{isAdmin ? "Attendance Overview" : `Hai, ${profile.name}`}:</p>
-            <p className="text-sm text-text-caption">{isAdmin ? "Monitor real-time attendance across your team." : dayjs(currentTime).format("dddd, MMMM DD, YYYY")}</p>
+            <p className="font-bold text-xl text-text-title">{isAdmin ? "Attendance Overview" : `Hai, ${profile.user.name}`}</p>
+            <p className="text-sm text-text-caption">{isAdmin ? "Monitor real-time attendance across your team." : dayjs(profile.serverTime).format("dddd, MMMM DD, YYYY")}</p>
           </div>
           {isAdmin ? <MonthPickerCustom value={filterSummary} onChange={(value) => setFilterSummary(value)} /> : <ClockCustom />}
         </div>

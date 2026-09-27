@@ -1,12 +1,16 @@
 import { create } from "zustand";
-import type { profileInterface, profileStateInterface } from "../types/zustand";
+import type { profileFullInterface, profileStateInterface } from "../types/zustand";
 
 const profileStore = create<profileStateInterface>((set) => ({
   profile: {
-    name: "Jhon Doe",
-    role: "Staff",
+    user: {
+      email: "",
+      name: "",
+      role: "",
+    },
+    serverTime: "",
   },
-  setProfile: (value: profileInterface) => set({ profile: value }),
+  setProfile: (value: profileFullInterface) => set({ profile: value }),
 }));
 
 export default profileStore;

@@ -1,11 +1,17 @@
 export interface profileInterface {
   name: string;
+  email: string;
   role: string;
 }
 
+export interface profileFullInterface {
+  user: profileInterface;
+  serverTime: string;
+}
+
 export interface profileStateInterface {
-  profile: profileInterface;
-  setProfile: (profile: profileInterface) => void;
+  profile: profileFullInterface;
+  setProfile: (profile: profileFullInterface) => void;
 }
 
 export interface loadingStateInterface {

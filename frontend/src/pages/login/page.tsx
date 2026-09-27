@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { errorFormLoginInterface, formLoginInterface } from "../../types/login";
 import { FingerprintPattern, LockKeyhole, Mail } from "lucide-react";
 import type { fieldsInputInterface } from "../../types/general";
@@ -62,6 +62,14 @@ export default function Login() {
         });
     }
   };
+
+  useEffect(() => {
+    if (Formatting.getToken(import.meta.env.VITE_PUBLIC_KEY_TOKEN)) {
+      navigate("/dashboard");
+    } else {
+      setLoading(false);
+    }
+  }, []);
 
   return (
     <div className="w-full h-dvh flex justify-center items-center">

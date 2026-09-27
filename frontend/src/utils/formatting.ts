@@ -17,4 +17,19 @@ export const Formatting = {
       Cookies.set(import.meta.env.VITE_PUBLIC_KEY_TOKEN || "", tokenEncrypted);
     }
   },
+
+  getToken: function (typeToken: string) {
+    const token = Cookies.get(typeToken);
+    if (token) {
+      const bytes = CryptoJS.AES.decrypt(token, import.meta.env.VITE_PUBLIC_KEY || "");
+      const tokenjwt = bytes.toString(CryptoJS.enc.Utf8);
+      return tokenjwt;
+    } else {
+      return "";
+    }
+  },
+
+  deleteAllToken: function () {
+    Cookies.remove(import.meta.env.VITE_PUBLIC_KEY_TOKEN || "");
+  },
 };
