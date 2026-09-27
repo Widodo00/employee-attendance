@@ -16,13 +16,6 @@ export interface inputCustomInterface extends fieldsInputInterface {
   errorText?: string;
 }
 
-export interface inputGroupInterface<T> {
-  formData: T;
-  errorForm: T;
-  fields: fieldsInputInterface[];
-  onChange: (value: string, name: string) => void;
-}
-
 export interface datePickerInterface {
   startValue: string;
   endValue: string;

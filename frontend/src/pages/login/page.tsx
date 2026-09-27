@@ -1,10 +1,18 @@
 import { useState } from "react";
 import type { errorFormLoginInterface, formLoginInterface } from "../../types/login";
 import { FingerprintPattern, LockKeyhole, Mail } from "lucide-react";
-import InputGroup from "../../component/inputGroup";
 import type { fieldsInputInterface } from "../../types/general";
+import loadingStore from "../../store/loadingStore";
+import { postLogin } from "../../api/auth";
+import { toast } from "react-toastify";
+import InputCustom from "../../component/inputCustom";
+import { Formatting } from "../../utils/formatting";
+import { useNavigate } from "react-router";
 
 export default function Login() {
+  const setLoading = loadingStore((state) => state.setLoading);
+  const navigate = useNavigate();
+  const [isErrorPass, setIsErrorPass] = useState<boolean>(false);
   const [form, setForm] = useState<formLoginInterface>({
     email: "",
     password: "",
@@ -20,11 +28,38 @@ export default function Login() {
     { label: "Password", name: "password", type: "password", placeholder: "Enter your password", Icon: LockKeyhole },
   ];
 
+  const handleOnChange = (value: string, name: string) => {
+    setForm((prev) => ({ ...prev, [name]: value }));
+    if (errorForm[name as keyof formLoginInterface]) {
+      setErrorForm((prev) => ({ ...prev, [name]: "" }));
+    }
+    if (isErrorPass) {
+      setIsErrorPass(false);
+    }
+  };
+
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!form.email.includes("@") || !form.email.includes(".")) {
       setErrorForm((prev) => ({ ...prev, email: "Invalid email" }));
+    } else {
+      setLoading(true);
+      postLogin(form)
+        .then((res) => {
+          Formatting.saveToken(res.data.accessToken);
+          navigate("/dashboard");
+          setLoading(false);
+        })
+        .catch((err) => {
+          if (err.message.includes("Invalid")) {
+            setIsErrorPass(true);
+            setErrorForm((prev) => ({ ...prev, password: "Invalid email or password" }));
+          } else {
+            toast.error(err.message.toString() ?? "Something wrong");
+          }
+          setLoading(false);
+        });
     }
   };
 
@@ -44,15 +79,22 @@ export default function Login() {
         </div>
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
-          <InputGroup
-            fields={formField}
-            formData={form}
-            onChange={(value: string, name: string) => {
-              setForm((prev) => ({ ...prev, [name]: value }));
-              setErrorForm((prev) => ({ ...prev, [name]: "" }));
-            }}
-            errorForm={errorForm}
-          />
+          <div className="flex flex-col gap-4">
+            {formField.map((item) => (
+              <InputCustom
+                key={item.name}
+                label={item.label}
+                name={item.name}
+                placeholder={item.placeholder}
+                value={form[item.name as keyof formLoginInterface]}
+                onChange={(value) => handleOnChange(value, item.name)}
+                type={item.type}
+                Icon={item.Icon}
+                errorText={errorForm[item.name as keyof formLoginInterface]}
+                isError={Boolean(errorForm[item.name as keyof formLoginInterface]) || isErrorPass}
+              />
+            ))}
+          </div>
           <button type="submit" className="btn-primary" disabled={Boolean(errorForm.email) || Boolean(errorForm.password) || !form.email || !form.password}>
             Sign in
           </button>

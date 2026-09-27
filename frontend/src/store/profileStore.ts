@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { profileInterface, profileStateInterface } from "../types/profile";
+import type { profileInterface, profileStateInterface } from "../types/zustand";
 
 const profileStore = create<profileStateInterface>((set) => ({
   profile: {
