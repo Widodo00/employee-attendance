@@ -6,13 +6,6 @@ import {
   AttendanceHistoryStatus,
 } from './dto/attendance-history.dto.js';
 import { AttendanceSummaryDto } from './dto/attendance-summary.dto.js';
-import {
-  formatDate,
-  formatDateTime,
-  getJakartaNow,
-  getJakartaToday,
-  parseDateOnly,
-} from '../helper/time-zone.js';
 
 @Injectable()
 export class AttendanceService {
@@ -39,7 +32,7 @@ export class AttendanceService {
       throw new BadRequestException('You have already clocked in today');
     }
 
-    const attendance = await this.prisma.attendance.create({
+    await this.prisma.attendance.create({
       data: {
         userId,
         date,
@@ -200,7 +193,7 @@ export class AttendanceService {
 
     const attendanceMap = new Map(
       attendances.map((attendance) => [
-        `${attendance.userId}_${formatDate(attendance.date)}`,
+        `${attendance.userId}_${attendance.date.toISOString().split('T')[0]}`,
         attendance,
       ]),
     );
@@ -216,7 +209,7 @@ export class AttendanceService {
     const currentDate = new Date(startDate);
 
     while (currentDate <= endDate) {
-      const dateKey = formatDate(currentDate);
+      const dateKey = currentDate.toISOString().split('T')[0];
 
       for (const user of users) {
         const attendance = attendanceMap.get(`${user.id}_${dateKey}`);
@@ -272,14 +265,9 @@ export class AttendanceService {
 
     const year = Number(yearString);
     const month = Number(monthString);
-
-    // Start of month
     const startDate = new Date(Date.UTC(year, month - 1, 1));
-
-    // Start of next month
     const endDate = new Date(Date.UTC(year, month, 1));
 
-    // Number of days in the requested month
     const today = new Date(
       new Date().toLocaleDateString('en-CA', {
         timeZone: 'Asia/Jakarta',
@@ -295,7 +283,6 @@ export class AttendanceService {
         ? currentDay
         : new Date(year, month, 0).getDate();
 
-    // Get all employees
     const employees = await this.prisma.user.findMany({
       where: {
         role: 'EMPLOYEE',
@@ -321,7 +308,6 @@ export class AttendanceService {
 
     const employeeIds = employees.map((employee) => employee.id);
 
-    // Get all attendance records in the requested month
     const attendances = await this.prisma.attendance.findMany({
       where: {
         userId: {
@@ -351,10 +337,7 @@ export class AttendanceService {
       }
     }
 
-    // Every employee is expected to have one attendance
-    // record for every day in the requested month.
     const totalExpectedAttendance = employeeCount * daysInMonth;
-
     const notClockedIn = totalExpectedAttendance - complete - clockedIn;
 
     return {
