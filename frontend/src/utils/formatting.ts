@@ -1,7 +1,7 @@
 import CryptoJS from "crypto-js";
 import Cookies from "js-cookie";
 import { toast } from "react-toastify";
-import type { locationInterface } from "../types/attendance";
+import type { ClockInPayload } from "../validation/attendance";
 
 export const Formatting = {
   profileName: function (value: string) {
@@ -36,7 +36,7 @@ export const Formatting = {
   },
 
   getLocation: function () {
-    return new Promise<locationInterface>((resolve, reject) => {
+    return new Promise<ClockInPayload>((resolve, reject) => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;

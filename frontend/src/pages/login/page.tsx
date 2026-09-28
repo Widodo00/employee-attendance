@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { errorFormLoginInterface, formLoginInterface } from "../../types/login";
+import type { errorFormLoginInterface } from "../../types/login";
 import { FingerprintPattern, LockKeyhole, Mail } from "lucide-react";
 import type { fieldsInputInterface } from "../../types/general";
 import loadingStore from "../../store/loadingStore";
@@ -8,9 +8,13 @@ import { toast } from "react-toastify";
 import InputCustom from "../../component/inputCustom";
 import { Formatting } from "../../utils/formatting";
 import { useNavigate } from "react-router";
+import profileStore from "../../store/profileStore";
+import { loginSchema, type formLoginInterface } from "../../validation/login";
 
 export default function Login() {
   const setLoading = loadingStore((state) => state.setLoading);
+  const setProfile = profileStore((state) => state.setProfile);
+  const loading = loadingStore((state) => state.loading);
   const navigate = useNavigate();
   const [isErrorPass, setIsErrorPass] = useState<boolean>(false);
   const [form, setForm] = useState<formLoginInterface>({
@@ -24,7 +28,7 @@ export default function Login() {
   });
 
   const formField: fieldsInputInterface[] = [
-    { label: "Username", name: "email", type: "text", placeholder: "your@mail.com", Icon: Mail },
+    { label: "Email", name: "email", type: "text", placeholder: "your@mail.com", Icon: Mail },
     { label: "Password", name: "password", type: "password", placeholder: "Enter your password", Icon: LockKeyhole },
   ];
 
@@ -41,26 +45,35 @@ export default function Login() {
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!form.email.includes("@") || !form.email.includes(".")) {
-      setErrorForm((prev) => ({ ...prev, email: "Invalid email" }));
-    } else {
-      setLoading(true);
-      postLogin(form)
-        .then((res) => {
-          Formatting.saveToken(res.data.accessToken);
-          navigate("/dashboard");
-          setLoading(false);
-        })
-        .catch((err) => {
-          if (err.message.includes("Invalid")) {
-            setIsErrorPass(true);
-            setErrorForm((prev) => ({ ...prev, password: "Invalid email or password" }));
-          } else {
-            toast.error(err.message.toString() ?? "Something wrong");
-          }
-          setLoading(false);
-        });
+    const validate = loginSchema.safeParse(form);
+
+    if (!validate.success) {
+      const errors = validate.error.flatten().fieldErrors;
+
+      setErrorForm({
+        email: errors.email?.[0] ?? "",
+        password: errors.password?.[0] ?? "",
+      });
+
+      return;
     }
+
+    setLoading(true);
+    postLogin(form)
+      .then((res) => {
+        Formatting.saveToken(res.data.accessToken);
+        navigate("/dashboard");
+        setLoading(false);
+      })
+      .catch((err) => {
+        if (err.message.includes("Invalid")) {
+          setIsErrorPass(true);
+          setErrorForm((prev) => ({ ...prev, password: "Invalid email or password" }));
+        } else {
+          toast.error(err.message.toString() || "Something wrong");
+        }
+        setLoading(false);
+      });
   };
 
   useEffect(() => {
@@ -68,6 +81,14 @@ export default function Login() {
       navigate("/dashboard");
     } else {
       setLoading(false);
+      setProfile({
+        serverTime: "",
+        user: {
+          email: "",
+          name: "",
+          role: "",
+        },
+      });
     }
   }, []);
 
@@ -103,7 +124,7 @@ export default function Login() {
               />
             ))}
           </div>
-          <button type="submit" className="btn-primary" disabled={Boolean(errorForm.email) || Boolean(errorForm.password) || !form.email || !form.password}>
+          <button type="submit" className="btn-primary" disabled={Boolean(errorForm.email) || Boolean(errorForm.password) || !form.email || !form.password || loading}>
             Sign in
           </button>
         </form>

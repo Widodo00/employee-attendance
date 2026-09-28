@@ -135,7 +135,9 @@ export class AttendanceService {
     const endDate = new Date(dto.endDate);
 
     if (startDate > endDate) {
-      throw new BadRequestException('startDate cannot be greater than endDate');
+      throw new BadRequestException(
+        'Start date cannot be greater than end date',
+      );
     }
 
     const today = new Date(
@@ -143,6 +145,10 @@ export class AttendanceService {
         timeZone: 'Asia/Jakarta',
       }),
     );
+
+    if (endDate > today) {
+      throw new BadRequestException('Date cannot be greater than today');
+    }
 
     if (userRole === 'EMPLOYEE' && endDate >= today) {
       endDate.setUTCDate(today.getUTCDate() - 1);
@@ -273,6 +279,10 @@ export class AttendanceService {
         timeZone: 'Asia/Jakarta',
       }),
     );
+
+    if (startDate > today) {
+      throw new BadRequestException('Date cannot be greater than today');
+    }
 
     const currentYear = today.getFullYear();
     const currentMonth = today.getMonth() + 1;

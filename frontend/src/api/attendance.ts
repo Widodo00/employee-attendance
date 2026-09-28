@@ -1,5 +1,6 @@
-import { type locationInterface, type tableInterface, type todayAttendanceInterface } from "../types/attendance";
+import { type tableInterface, type todayAttendanceInterface } from "../types/attendance";
 import api from "../utils/api";
+import type { locationInterface } from "../validation/attendance";
 
 interface successInterface {
   message: string;

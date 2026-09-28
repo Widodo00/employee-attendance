@@ -1,7 +1,7 @@
 import type { CustomAxiosRequestConfig } from "../types/general";
-import type { formLoginInterface } from "../types/login";
-import type { profileFullInterface } from "../types/zustand";
+import type { profileInterface } from "../types/login";
 import api from "../utils/api";
+import type { formLoginInterface } from "../validation/login";
 
 interface LoginResponse {
   accessToken: string;
@@ -14,5 +14,5 @@ export const postLogin = (body: formLoginInterface) => {
 };
 
 export const getProfile = () => {
-  return api.get<profileFullInterface>("auth/profile");
+  return api.get<profileInterface>("auth/profile");
 };

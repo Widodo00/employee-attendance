@@ -55,6 +55,7 @@ export interface paginationInterface<T> {
 export interface monthPickerInterface {
   value: string;
   onChange: (value: string) => void;
+  max: string;
 }
 
 export interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {

@@ -11,17 +11,12 @@ export interface todayAttendanceInterface {
   data: dataTodayAttendanceInterface | null;
 }
 
-export interface locationInterface {
-  latitude: number;
-  longitude: number;
-}
-
 export interface dataTableInterface {
   clockIn: string;
   clockOut: string;
   date: string;
   name: string;
-  status: "Present" | "Absent" | "CLocked In";
+  status: "Present" | "Absent" | "Clocked In";
 }
 
 export interface pagingTableInterface {

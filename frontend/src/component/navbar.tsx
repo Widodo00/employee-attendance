@@ -26,11 +26,11 @@ export default function NavBar() {
       setLoading(true);
       getProfile()
         .then((res) => {
-          setProfile(res.data);
+          setProfile(res.data.data);
           setLoading(false);
         })
         .catch((err) => {
-          toast.error(err.message.toString() ?? "Terjadi kesalahan");
+          toast.error(err.message.toString() || "Something went wrong");
           setLoading(false);
         });
     } else {
