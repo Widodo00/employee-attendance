@@ -6,6 +6,7 @@ import {
   AttendanceHistoryStatus,
 } from './dto/attendance-history.dto.js';
 import { AttendanceSummaryDto } from './dto/attendance-summary.dto.js';
+import { Prisma } from '../../generated/prisma/client.js';
 
 @Injectable()
 export class AttendanceService {
@@ -154,114 +155,126 @@ export class AttendanceService {
       endDate.setUTCDate(today.getUTCDate() - 1);
     }
 
-    const users = await this.prisma.user.findMany({
-      where:
-        userRole === 'ADMIN'
-          ? {
-              role: 'EMPLOYEE',
-            }
-          : {
-              id: userId,
-            },
-      select: {
-        id: true,
-        name: true,
-      },
-    });
+    const page = dto.page ?? 1;
+    const limit = 10;
 
-    if (users.length === 0) {
+    if (page < 1) {
+      throw new BadRequestException('Page must be greater than 0');
+    }
+
+    const offset = (page - 1) * limit;
+
+    const userCondition =
+      userRole === 'ADMIN'
+        ? Prisma.sql`u."role" = 'EMPLOYEE'`
+        : Prisma.sql`u."id" = ${userId}`;
+
+    const statusCondition = dto.status
+      ? Prisma.sql`
+        AND (
+          CASE
+            WHEN a."id" IS NULL THEN 'Absent'
+            WHEN a."clockOut" IS NOT NULL THEN 'Present'
+            ELSE 'Clocked In'
+          END
+        ) = ${dto.status}
+      `
+      : Prisma.empty;
+
+    const totalResult = await this.prisma.$queryRaw<
+      { total: bigint }[]
+    >(Prisma.sql`
+    SELECT COUNT(*) AS total
+    FROM "users" u
+    CROSS JOIN generate_series(
+      ${startDate}::date,
+      ${endDate}::date,
+      INTERVAL '1 day'
+    ) AS dates("date")
+    LEFT JOIN "attendances" a
+      ON a."userId" = u."id"
+      AND a."date" = dates."date"
+    WHERE ${userCondition}
+    ${statusCondition}
+  `);
+
+    const total = Number(totalResult[0]?.total ?? 0);
+    const totalPages = Math.ceil(total / limit);
+
+    if (offset >= total) {
       return {
-        message: 'No employee found',
+        message: 'Attendance history retrieved successfully',
         data: [],
         paging: {
-          page: dto.page,
-          limit: 10,
-          total: 0,
-          totalPages: 0,
+          page,
+          limit,
+          total,
+          totalPages,
         },
       };
     }
 
-    const attendances = await this.prisma.attendance.findMany({
-      where: {
-        userId: {
-          in: users.map((user) => user.id),
-        },
-        date: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
-      orderBy: {
-        date: 'asc',
-      },
-    });
+    const rows = await this.prisma.$queryRaw<
+      {
+        name: string;
+        date: Date;
+        clockIn: Date | null;
+        clockOut: Date | null;
+        status: AttendanceHistoryStatus;
+      }[]
+    >(Prisma.sql`
+    SELECT
+      u."name" AS "name",
+      dates."date" AS "date",
+      a."clockIn" AS "clockIn",
+      a."clockOut" AS "clockOut",
 
-    const attendanceMap = new Map(
-      attendances.map((attendance) => [
-        `${attendance.userId}_${attendance.date.toISOString().split('T')[0]}`,
-        attendance,
-      ]),
-    );
+      CASE
+        WHEN a."id" IS NULL THEN 'Absent'
+        WHEN a."clockOut" IS NOT NULL THEN 'Present'
+        ELSE 'Clocked In'
+      END AS "status"
 
-    const history: {
-      name: string;
-      date: string;
-      clockIn: Date | null;
-      clockOut: Date | null;
-      status: AttendanceHistoryStatus;
-    }[] = [];
+    FROM "users" u
 
-    const currentDate = new Date(startDate);
+    CROSS JOIN generate_series(
+      ${startDate}::date,
+      ${endDate}::date,
+      INTERVAL '1 day'
+    ) AS dates("date")
 
-    while (currentDate <= endDate) {
-      const dateKey = currentDate.toISOString().split('T')[0];
+    LEFT JOIN "attendances" a
+      ON a."userId" = u."id"
+      AND a."date" = dates."date"
 
-      for (const user of users) {
-        const attendance = attendanceMap.get(`${user.id}_${dateKey}`);
+    WHERE ${userCondition}
 
-        let status: AttendanceHistoryStatus;
+    ${statusCondition}
 
-        if (!attendance) {
-          status = AttendanceHistoryStatus.ABSENT;
-        } else if (attendance.clockOut) {
-          status = AttendanceHistoryStatus.PRESENT;
-        } else {
-          status = AttendanceHistoryStatus.CLOCKED_IN;
-        }
+    ORDER BY
+      dates."date" ASC,
+      u."name" ASC
 
-        if (dto.status && status !== dto.status) {
-          continue;
-        }
+    OFFSET ${offset}
+    LIMIT ${limit}
+  `);
 
-        history.push({
-          name: user.name,
-          date: dateKey,
-          clockIn: attendance?.clockIn ?? null,
-          clockOut: attendance?.clockOut ?? null,
-          status,
-        });
-      }
-
-      currentDate.setUTCDate(currentDate.getUTCDate() + 1);
-    }
-
-    const total = history.length;
-
-    const page = dto.page ?? 1;
-    const limit = 10;
-
-    const skip = (page - 1) * limit;
-
-    const data = history.slice(skip, skip + limit);
+    const data = rows.map((row) => ({
+      name: row.name,
+      date: row.date.toISOString().split('T')[0],
+      clockIn: row.clockIn,
+      clockOut: row.clockOut,
+      status: row.status,
+    }));
 
     return {
       message: 'Attendance history retrieved successfully',
       data,
       paging: {
         page,
+        limit,
         total,
-        totalPages: Math.ceil(total / limit),
+        totalPages,
       },
     };
   }

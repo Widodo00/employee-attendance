@@ -18,13 +18,13 @@ interface filterInterface {
   startDate: string;
   endDate: string;
   status: string;
+  page: number;
 }
 
 export default function Dashboard() {
   const setLoading = loadingStore((state) => state.setLoading);
   const profile = profileStore((state) => state.profile);
   const isAdmin = profile.user.role === "ADMIN";
-  const [page, setPage] = useState<number>(1);
 
   const option = [
     { label: "All status", value: "" },
@@ -37,6 +37,7 @@ export default function Dashboard() {
     startDate: "",
     endDate: "",
     status: "",
+    page: 1,
   });
 
   const {
@@ -44,8 +45,9 @@ export default function Dashboard() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["attendance-history", page, filter.startDate, filter.endDate, filter.status],
-    queryFn: () => getHistory(`?page=${page}&startDate=${filter.startDate || dayjs(profile.serverTime).startOf("M").format("YYYY-MM-DD")}&endDate=${filter.endDate || dayjs(profile.serverTime).format("YYYY-MM-DD")}&status=${filter.status}`),
+    queryKey: ["attendance-history", filter.page, filter.startDate, filter.endDate, filter.status],
+    queryFn: () =>
+      getHistory(`?page=${filter.page}&startDate=${filter.startDate || dayjs(profile.serverTime).startOf("M").format("YYYY-MM-DD")}&endDate=${filter.endDate || dayjs(profile.serverTime).format("YYYY-MM-DD")}&status=${filter.status}`),
     enabled: !!profile?.serverTime,
     gcTime: 10 * 60 * 1000,
   });
@@ -61,7 +63,7 @@ export default function Dashboard() {
   ];
 
   const onChangePage = (value: number) => {
-    setPage(value);
+    setFilter((prev) => ({ ...prev, page: value }));
   };
 
   useEffect(() => {
@@ -93,10 +95,12 @@ export default function Dashboard() {
                 endName="endDate"
                 startValue={filter.startDate || dayjs(profile.serverTime).startOf("M").format("YYYY-MM-DD")}
                 endValue={filter.endDate || dayjs(profile.serverTime).format("YYYY-MM-DD")}
-                onChange={(value, name) => setFilter((prev) => ({ ...prev, [name]: value }))}
+                onChange={(value, name) => {
+                  setFilter((prev) => ({ ...prev, [name]: value, page: 1 }));
+                }}
               />
               <div className="w-37.5">
-                <SelectCustom name="type" options={option} placeholder="Select type" onChange={(evt) => setFilter((prev) => ({ ...prev, status: evt!.value as string }))} value={filter.status!} />
+                <SelectCustom name="type" options={option} placeholder="Select type" onChange={(evt) => setFilter((prev) => ({ ...prev, status: evt!.value as string, page: 1 }))} value={filter.status!} />
               </div>
             </div>
           </div>
