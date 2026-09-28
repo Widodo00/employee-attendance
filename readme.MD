@@ -59,6 +59,7 @@ npm install
 Create a `.env` file inside the `frontend` directory:
 
 VITE_API_URL=http://localhost:3000/
+
 VITE_PUBLIC_KEY=o5HcZTIiyosF12jdBErN5r1iOEjxZHBh
 VITE_PUBLIC_KEY_TOKEN=RfEM6HubGzb2LZnnZzlju6eGMjemxFEG
 
