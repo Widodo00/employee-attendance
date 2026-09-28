@@ -27,6 +27,7 @@ export default function Dashboard() {
   const [page, setPage] = useState<number>(1);
 
   const option = [
+    { label: "All status", value: "" },
     { label: "Present", value: "Present" },
     { label: "Absent", value: "Absent" },
     { label: "Clocked In", value: "Clocked In" },

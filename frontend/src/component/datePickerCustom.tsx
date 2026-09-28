@@ -1,6 +1,7 @@
 import { Minus } from "lucide-react";
 import type { datePickerInterface } from "../types/general";
 import profileStore from "../store/profileStore";
+import dayjs from "dayjs";
 
 export default function DatePickerCustom({ startValue, endValue, startName, endName, onChange }: datePickerInterface) {
   const profile = profileStore((state) => state.profile);
@@ -16,7 +17,7 @@ export default function DatePickerCustom({ startValue, endValue, startName, endN
       </p>
       <div className="flex flex-col gap-1">
         <p>Tanggal Selesai</p>
-        <input type="date" className="input-custom text-black bg-white" value={endValue} onChange={(evt) => onChange(evt.target.value, endName)} max={profile.serverTime} />
+        <input type="date" className="input-custom text-black bg-white" value={endValue} onChange={(evt) => onChange(evt.target.value, endName)} max={dayjs(profile.serverTime).format("YYYY-MM-DD")} />
       </div>
     </div>
   );
